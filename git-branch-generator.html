@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Inputs e Storage</title>
+    <meta charset="UTF-8" />
+    <script src="https://unpkg.com/unorm/lib/unorm.js"></script>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 600px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #f7f7f7;
+      }
+
+      label {
+        display: inline-block;
+        width: 150px;
+        font-weight: bold;
+      }
+
+      input {
+        display: inline-block;
+        width: 100%;
+        margin-bottom: 10px;
+        padding: 5px;
+        border: 1px solid #ccc;
+      }
+
+      button {
+        background-color: #4caf50;
+        border: none;
+        color: white;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 14px;
+        margin: 5px 2px;
+        cursor: pointer;
+        padding: 8px 16px;
+        border-radius: 4px;
+      }
+
+      button:hover {
+        background-color: #45a049;
+      }
+
+      .hidden {
+        display: none;
+      }
+
+      #output {
+        background-color: #fff;
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-top: 10px;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+
+      #output span {
+        display: block;
+        margin-bottom: 5px;
+      }
+
+      #output span:last-child {
+        margin-bottom: 0;
+      }
+    </style>
+  </head>
+
+  <body>
+    <label for="titulo_epico">Título do épico:</label>
+    <input type="text" id="titulo_epico" /><br />
+
+    <label for="numero_epico">Número do épico:</label>
+    <input type="number" id="numero_epico" /><br />
+
+    <label for="titulo_tarefa">Título da tarefa:</label>
+    <input type="text" id="titulo_tarefa" /><br />
+
+    <label for="numero_tarefa">Número da tarefa:</label>
+    <input type="number" id="numero_tarefa" /><br />
+
+    <button onclick="salvar()">Salvar</button>
+    <div id="output" class="hidden"></div>
+    <div id="buttons" class="hidden">
+      <button onclick="copiarTexto('branch_epico')">
+        Copiar branch do épico
+      </button>
+      <button onclick="copiarTexto('branch_tarefa')">
+        Copiar branch da tarefa
+      </button>
+      <button onclick="copiarTexto('git_epico')">
+        Copiar comando git do épico
+      </button>
+      <button onclick="copiarTexto('git_tarefa')">
+        Copiar comando git da tarefa
+      </button>
+    </div>
+
+    <script>
+      function salvar() {
+        localStorage.setItem(
+          "titulo_epico",
+          removerAcentos(document.getElementById("titulo_epico").value)
+        );
+        localStorage.setItem(
+          "numero_epico",
+          document.getElementById("numero_epico").value
+        );
+        localStorage.setItem(
+          "titulo_tarefa",
+          removerAcentos(document.getElementById("titulo_tarefa").value)
+        );
+        localStorage.setItem(
+          "numero_tarefa",
+          document.getElementById("numero_tarefa").value
+        );
+
+        let outputElement = document.getElementById("output");
+        let branch_epico =
+          "feature/epic_" +
+          localStorage.getItem("numero_epico") +
+          "_" +
+          criarSlug(localStorage.getItem("titulo_epico"));
+        let branch_tarefa =
+          "feature/" +
+          localStorage.getItem("numero_tarefa") +
+          "_card_" +
+          criarSlug(localStorage.getItem("titulo_tarefa"));
+
+        let git_epico = `git fetch origin && git checkout -b ${branch_epico} origin/main`;
+        let git_tarefa = `git fetch origin && git checkout -b ${branch_tarefa} ${branch_epico}`;
+
+        outputElement.innerHTML =
+          "<span id='branch_epico'><strong>Branch épico:</strong> " +
+          branch_epico +
+          "</span><span id='branch_tarefa'><strong>Branch tarefa:</strong> " +
+          branch_tarefa +
+          "</span><span id='git_epico'><strong>Comando git criar branch do épico:</strong> " +
+          git_epico +
+          "</span><span id='git_tarefa'><strong>Comando git criar branch da tarefa:</strong> " +
+          git_tarefa +
+          "</span>";
+
+        outputElement.classList.remove("hidden");
+        document.getElementById("buttons").classList.remove("hidden");
+      }
+
+      function copiarTexto(elementId) {
+        let element = document.getElementById(elementId);
+        let content = element.textContent.split(": ")[1];
+        let textarea = document.createElement("textarea");
+        textarea.textContent = content;
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textarea);
+        alert("Texto copiado: " + content);
+      }
+
+      window.onload = function () {
+        document.getElementById("titulo_epico").value =
+          localStorage.getItem("titulo_epico");
+        document.getElementById("numero_epico").value =
+          localStorage.getItem("numero_epico");
+        document.getElementById("titulo_tarefa").value =
+          localStorage.getItem("titulo_tarefa");
+        document.getElementById("numero_tarefa").value =
+          localStorage.getItem("numero_tarefa");
+
+        let branch_epico =
+          "feature/epic_" +
+          localStorage.getItem("numero_epico") +
+          "_" +
+          criarSlug(localStorage.getItem("titulo_epico"));
+        let branch_tarefa =
+          "feature/" +
+          localStorage.getItem("numero_tarefa") +
+          "_" +
+          criarSlug(localStorage.getItem("titulo_tarefa"));
+
+        console.log("Branch épico: " + branch_epico);
+        console.log("Branch tarefa: " + branch_tarefa);
+      };
+
+      function removerAcentos(texto) {
+        return unorm.nfd(texto).replace(/[\u0300-\u036f]/g, "");
+      }
+
+      function criarSlug(texto) {
+        let palavrasExcluidas = [
+          "a",
+          "ao",
+          "aos",
+          "as",
+          "à",
+          "às",
+          "o",
+          "os",
+          "na",
+          "no",
+          "nas",
+          "nos",
+          "e",
+          "da",
+          "das",
+          "de",
+          "ante",
+          "após",
+          "até",
+          "com",
+          "contra",
+          "desde",
+          "desse",
+          "do",
+          "dos",
+          "durante",
+          "em",
+          "entre",
+          "para",
+          "pela",
+          "pelas",
+          "perante",
+          "por",
+          "sem",
+          "sob",
+          "sobre",
+          "trás",
+          "tras",
+          "dentre",
+          "dentro",
+          "mediante",
+          "via",
+        ];
+
+        texto = removerAcentos(texto);
+        texto = texto.toLowerCase();
+        texto = texto.replace(/[^a-z0-9 -]/g, "");
+        texto = texto.trim();
+        texto = texto.replace(/ /g, "_");
+        texto = texto.replace(/-+/g, "_");
+        for (let i = 0; i < palavrasExcluidas.length; i++) {
+          texto = texto.replace(
+            new RegExp(
+              "^" +
+                palavrasExcluidas[i] +
+                "_|_" +
+                palavrasExcluidas[i] +
+                "$|_" +
+                palavrasExcluidas[i] +
+                "_",
+              "g"
+            ),
+            "_"
+          );
+        }
+        return texto.replace(/_+/g, "_").replace(/(^_|_$)/g, "");
+      }
+    </script>
+  </body>
+</html>
